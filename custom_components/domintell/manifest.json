@@ -1,10 +1,10 @@
 {
   "domain": "domintell",
-  "name": "Domintell Integration",
+  "name": "Domintell with WebSockets Integration",
   "version": "1.0.1",
-  "documentation": "https://github.com/shamanenas/has_domintell",
+  "documentation": "https://github.com/zonderpit/has_domintell",
   "dependencies": ["mqtt"],
-  "codeowners": ["@zilvinas"],
-  "requirements": ["python-domintell==0.0.17"],
+  "codeowners": ["@zilvinas", "@ZonderPit"],
+  "requirements_DISABLED": ["python-domintell-ws==0.0.17"],
   "quality_scale": "Silver"
 }

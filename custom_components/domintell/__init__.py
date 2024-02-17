@@ -9,10 +9,9 @@ https://github.com/shamanenas/has_domintell
 import time
 import logging
 import voluptuous as vol
-import threading
 
 import homeassistant.helpers.config_validation as cv
-from homeassistant.const import EVENT_HOMEASSISTANT_STOP, CONF_HOST, CONF_PORT, CONF_PASSWORD
+from homeassistant.const import EVENT_HOMEASSISTANT_STOP, CONF_HOST, CONF_PORT, CONF_USERNAME, CONF_PASSWORD
 
 from .const import (
     CONF_BINARY_SENSOR,
@@ -33,8 +32,9 @@ _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = vol.Schema({
     DOMAIN: vol.Schema({
         vol.Required(CONF_HOST): cv.string,
-        vol.Required(CONF_PASSWORD):cv.string,
-        vol.Optional('ping_interval', default=60): cv.positive_int
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Optional(CONF_USERNAME, default=''): cv.string,
+        vol.Optional('ping_interval', default=50): cv.positive_int
     })
 }, extra=vol.ALLOW_EXTRA)
 
@@ -47,12 +47,19 @@ def setup(hass, config):
 
     host = config[DOMAIN].get(CONF_HOST)
     ping_interval = config[DOMAIN].get('ping_interval')
-    pswd = bytearray()
-    for c in config[DOMAIN].get(CONF_PASSWORD):
-        pswd.append(ord(c))
+    username = config[DOMAIN].get(CONF_USERNAME)
+    if username == '':
+        password = bytearray()
+        for c in config[DOMAIN].get(CONF_PASSWORD):
+            password.append(ord(c))
+    else:
+        password = config[DOMAIN].get(CONF_PASSWORD)
 
-    _LOGGER.debug(host)
-    _LOGGER.debug(pswd)
+    _LOGGER.debug('*** DOMINTELL OPTIONS ***')
+    _LOGGER.debug(f"{CONF_HOST} : [{host}]")
+    _LOGGER.debug(f"ping_interval : [{str(ping_interval)}]")
+    _LOGGER.debug(f"{CONF_USERNAME} : [{username}]")
+    _LOGGER.debug(f"{CONF_PASSWORD} : [{'*' * len(password)}]")
 
     controller = domintell.Controller(host)
 
@@ -63,22 +70,22 @@ def setup(hass, config):
             if ping_interval > 0:
                 controller.start_ping(ping_interval)
         elif isinstance(message, domintell.SessionClosedMessage):
-            # we were disconnected by the DETH02, try to reconnect
-            controller.login(pswd)
+            # we were disconnected by the host, try to reconnect
+            controller.login(username, password)
         elif isinstance(message, domintell.SessionTimeoutMessage):
-            # we were disconnected by the DETH02, try to reconnect
-            controller.login(pswd)
+            # we were disconnected by the host, try to reconnect
+            controller.login(username, password)
 
     controller.subscribe(_on_message)
     hass.data[DOMAIN] = controller
 
-    controller.login(pswd)
-    _LOGGER.debug("login")
+    controller.login(username, password)
+    _LOGGER.debug("Logging in...")
     time.sleep(2)
 
     def stop_domintell(event):
         """Disconnect."""
-        _LOGGER.warning("Shutting down ")
+        _LOGGER.warning("Shutting down...")
         controller.stop()
 
     hass.bus.listen_once(EVENT_HOMEASSISTANT_STOP, stop_domintell)
