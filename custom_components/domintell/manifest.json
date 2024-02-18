@@ -5,6 +5,6 @@
   "documentation": "https://github.com/zonderpit/has_domintell",
   "dependencies": ["mqtt"],
   "codeowners": ["@zilvinas", "@ZonderPit"],
-  "requirements_DISABLED": ["python-domintell-ws==0.0.17"],
-  "quality_scale": "Silver"
+  "requirements": ["python-domintell-ws==0.0.17", "voluptuous"],
+  "quality_scale": "not_yet_rated"
 }
